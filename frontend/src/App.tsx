@@ -1,4 +1,16 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { DemoBanner } from "./components/DemoBanner";
+
+function UnauthorizedRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const redirect = () => navigate("/login", { replace: true });
+    window.addEventListener("api:nao-autenticado", redirect);
+    return () => window.removeEventListener("api:nao-autenticado", redirect);
+  }, [navigate]);
+  return null;
+}
 
 function Inicio() {
   return (
@@ -38,10 +50,14 @@ function Login() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Inicio />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="*" element={<Inicio />} />
-    </Routes>
+    <>
+      <DemoBanner />
+      <UnauthorizedRedirect />
+      <Routes>
+        <Route path="/" element={<Inicio />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Inicio />} />
+      </Routes>
+    </>
   );
 }

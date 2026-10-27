@@ -1,13 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { AuthProvider } from "./auth/AuthContext";
 import App from "./App";
 
 describe("aplicacao", () => {
   it("apresenta a entrada da plataforma", () => {
     render(
       <MemoryRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </MemoryRouter>,
     );
 
