@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ehDataIsoValida } from '../../utils/datas.js';
 import { esquemaPaginacao } from '../../utils/paginacao.js';
 import { enumeracao } from '../../validacao/enumeracao.js';
+import { esquemaDataIso } from '../../validacao/esquemas-comuns.js';
 import { EstadosAluno, Turnos } from './tipos.js';
 
 const textoObrigatorio = (mensagem: string) =>
@@ -26,10 +26,6 @@ const esquemaTurma = z
   .transform((valor) => String(valor).trim())
   .pipe(z.string().min(1, 'A turma e obrigatoria.'));
 
-const esquemaDataNascimento = z
-  .string()
-  .refine((valor) => ehDataIsoValida(valor), 'Data invalida (use AAAA-MM-DD).');
-
 export const esquemaCriarAluno = z.object({
   nome: textoObrigatorio('O nome e obrigatorio.'),
   classe: esquemaClasse,
@@ -39,7 +35,7 @@ export const esquemaCriarAluno = z.object({
   numeroEmergencia: textoObrigatorio('O numero de emergencia e obrigatorio.'),
   numeroEncarregado: textoObrigatorio('O numero do encarregado e obrigatorio.'),
   nomeEncarregado: textoObrigatorio('O nome do encarregado nao pode ficar vazio.').nullish(),
-  dataNascimento: esquemaDataNascimento.nullish(),
+  dataNascimento: esquemaDataIso.nullish(),
 });
 
 /** Na atualizacao os campos sao os mesmos, mas todos opcionais. */

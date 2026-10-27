@@ -9,6 +9,7 @@ import { utilizadorAtual } from '../../middlewares/autenticacao.js';
 import { Papeis } from '../auth/tipos.js';
 import { validar } from '../../validacao/validar.js';
 import { paginar } from '../../utils/paginacao.js';
+import { parametroDoCaminho } from '../../utils/pedido.js';
 import { compararNomes, normalizarTexto } from '../../utils/texto.js';
 import {
   atualizarAluno,
@@ -30,11 +31,9 @@ import type { Aluno, AlunoResumo } from './tipos.js';
 
 type FiltrosAlunos = z.infer<typeof esquemaFiltrosAlunos>;
 
-/** O id vem sempre no caminho; se faltar, devolvemos texto vazio e da 404. */
-function idDoPedido(req: Request): string {
-  const id = req.params.id;
-
-  return typeof id === 'string' ? id : '';
+/** O id do aluno vem no caminho; se faltar, devolvemos texto vazio e da 404. */
+function idDoAluno(req: Request): string {
+  return parametroDoCaminho(req, 'id');
 }
 
 
@@ -156,7 +155,7 @@ export const listar: RequestHandler = async (req, res, next) => {
 
 export const obter: RequestHandler = async (req, res, next) => {
   try {
-    const aluno = await procurarAlunoPorId(idDoPedido(req));
+    const aluno = await procurarAlunoPorId(idDoAluno(req));
 
     if (!aluno) {
       throw erroNaoEncontrado('Aluno nao encontrado.');
@@ -173,7 +172,7 @@ export const atualizar: RequestHandler = async (req, res, next) => {
     const alteracoes = validar(esquemaAtualizarAluno, req.body);
     const normalizadas = comTelefonesNormalizados(alteracoes);
 
-    const resultado = await atualizarAluno(idDoPedido(req), normalizadas);
+    const resultado = await atualizarAluno(idDoAluno(req), normalizadas);
 
     if (resultado.estado === 'nao-encontrado') {
       throw erroNaoEncontrado('Aluno nao encontrado.');
@@ -196,7 +195,7 @@ export const atualizar: RequestHandler = async (req, res, next) => {
 export const atualizarEstado: RequestHandler = async (req, res, next) => {
   try {
     const { estado } = validar(esquemaAtualizarEstadoAluno, req.body);
-    const aluno = await atualizarEstadoAluno(idDoPedido(req), estado);
+    const aluno = await atualizarEstadoAluno(idDoAluno(req), estado);
 
     if (!aluno) {
       throw erroNaoEncontrado('Aluno nao encontrado.');
