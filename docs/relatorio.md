@@ -12,7 +12,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Passo 01 - Backend base
 - Passo 02 - CI
 - Passo 03 - Armazenamento JSON
-- Passo 04 - Autenticacao e papeis *(a fazer)*
+- Passo 04 - Autenticacao e papeis
 - Passo 05 - Alunos *(a fazer)*
 - Passo 06 - Ocorrencias *(a fazer)*
 - Passo 07 - Disciplinas, professores e notas *(a fazer)*
@@ -68,6 +68,13 @@ testes, comentadas como "a confirmar com o regulamento da escola":
   configuravel (a confirmar).
 - **Aluno em risco**: 3 ou mais disciplinas com MT abaixo de 10 num trimestre,
   ou faltas injustificadas acima do limite configuravel.
+
+Sobre a sessao, ficam tambem duas decisoes tecnicas a confirmar:
+
+- **Sessao sem estado.** A sessao e um token (JWT) dentro do cookie, por isso
+  sair so apaga o cookie no browser; nao ha revogacao imediata no servidor.
+- **Limite de tentativas de login**: 5 falhas por cada 15 minutos, por
+  endereco de rede (configuravel por ambiente).
 
 Os calculos nunca se guardam: calculam-se sempre ao ler.
 
@@ -450,3 +457,128 @@ atualizacoes com 20 escritas concorrentes.
 ### Commit
 
 `b56b1ed` - `feat(armazenamento): camada json com escrita atomica e fila`
+
+## Passo 04 - Autenticacao e papeis
+
+### Objetivo
+
+Ter sessao a serio: entrar com email e palavra-passe, guardar a sessao num cookie
+`cardeneta_sessao` (HttpOnly), saber quem esta do outro lado em cada pedido e
+distinguir os dois papeis do contrato, **COORDENADOR** e **PROFESSOR**. Todo o
+controlo de acessos fica no servidor: o frontend nunca decide o que pode ver.
+
+### O que fizemos e porquê
+
+- **bcryptjs para as senhas.** Guardamos so o hash (10 rondas), nunca a
+  palavra-passe. A comparacao e feita com `bcrypt.compare`, que ja resiste a
+  ataques de tempo. Escolhemos o `bcryptjs` (e nao o `bcrypt` nativo) porque e
+  JavaScript puro e nao obriga a compilar nada no Windows nem no CI.
+- **JWT dentro do cookie `cardeneta_sessao`.** Assinamos com `SESSION_SECRET` e
+  guardamos apenas o id do utilizador e o papel; o nome e as disciplinas sao
+  lidos do armazenamento a cada pedido, para nao ficarem desatualizados dentro
+  do cookie. O cookie e `HttpOnly`, `SameSite=Lax` e so vai por HTTPS em
+  producao.
+- **Um utilizador publico e um guardado.** No ficheiro `utilizadores.json` fica o
+  `senhaHash` e o `criadoEm`; na API sai apenas o `Utilizador` do contrato. A
+  funcao `paraUtilizadorPublico` e o unico sitio onde essa conversao acontece,
+  para ser impossivel deixar escapar o hash.
+- **Middleware `exigirAutenticacao` e `exigirPapel`.** O primeiro valida o cookie
+  e o token e pendura o utilizador no pedido (`req.utilizador`); o segundo
+  responde **403 SEM_PERMISSAO** quando o papel nao serve. Sem sessao valida, o
+  primeiro responde **401 NAO_AUTENTICADO**.
+- **Limitador de tentativas no login.** Criamos um fabricante
+  (`criarLimitadorDeTentativas`) que responde no formato do contrato, com **429
+  DEMASIADAS_TENTATIVAS**. No login so contam as tentativas falhadas
+  (`skipSuccessfulRequests`), para um utilizador que entra bem nao gastar o
+  orcamento. Os valores (`LOGIN_MAX_TENTATIVAS`, `LOGIN_JANELA_MINUTOS`) vem do
+  ambiente. O limitador geral de producao passou a usar o mesmo fabricante, para
+  deixar de responder texto simples.
+- **`criarRotasApi()` em vez de um router global.** Cada `criarApp()` cria os
+  seus proprios limitadores. Isso da isolamento aos testes: um teste que esgota
+  as tentativas de login nao estraga os testes seguintes.
+- **Segredo com rede de seguranca.** O `SESSION_SECRET` e obrigatorio (minimo 16
+  caracteres) e tem um valor de desenvolvimento por defeito, para o CI e os
+  testes correrem sem configuracao. Em producao, se ficar com esse valor, o
+  arranque **falha** com erro de configuracao.
+- **`campos` de erro como mapa.** O contrato pede
+  `campos = { nomeDoCampo: "mensagem" }` (objeto, nao lista); alinhamos o
+  `AppError` e o `tratadorDeErros` com isso e criamos o `validar(esquema, dados)`,
+  que transforma os problemas do Zod nesse mapa e responde **400
+  VALIDACAO_INVALIDA**.
+
+### Ficheiros criados ou alterados
+
+- `backend/src/modules/auth/tipos.ts`, `senhas.ts`, `jwt.ts`, `sessao.ts`,
+  `utilizadores.repositorio.ts`, `auth.controller.ts`, `auth.routes.ts`
+- `backend/src/middlewares/autenticacao.ts`, `backend/src/middlewares/limitador.ts`
+- `backend/src/validacao/validar.ts`
+- `backend/src/tipos/express.d.ts` (acrescenta `req.utilizador`)
+- `backend/src/config/env.ts` (`SESSION_SECRET`, `SESSION_DURACAO_HORAS`,
+  `LOGIN_JANELA_MINUTOS`, `LOGIN_MAX_TENTATIVAS`)
+- `backend/src/errors/codigos.ts` (todos os codigos do contrato),
+  `backend/src/errors/app-error.ts` (`campos` como mapa e mais atalhos)
+- `backend/src/app.ts`, `backend/src/routes/index.ts`
+- `backend/.env.example`, `backend/package.json`
+- `backend/tests/auth.test.ts`, `backend/tests/ajuda/autenticacao.ts`
+
+### Como correr e testar
+
+```
+npm run typecheck
+npm test
+npm run build
+```
+
+As novas variaveis de ambiente tem valores por defeito, por isso nao precisamos
+de `.env` para correr isto. Em producao, `SESSION_SECRET` tem de ser definido.
+
+### Resultado dos testes
+
+```
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/armazenamento.test.ts (6 tests) 3695ms
+ ✓ tests/saude.test.ts (2 tests) 131ms
+ ✓ tests/auth.test.ts (13 tests) 3481ms
+
+ Test Files  3 passed (3)
+      Tests  21 passed (21)
+   Duration  11.70s
+```
+
+Os treze testes de autenticacao cobrem: login com credenciais validas (e a
+garantia de que o `senhaHash` e o `criadoEm` nao saem na resposta), email com
+maiusculas e espacos, palavra-passe errada (401 CREDENCIAIS_INVALIDAS), email
+desconhecido (mesmo 401, sem revelar se o email existe), corpo invalido
+(400 VALIDACAO_INVALIDA com `campos`), bloqueio por tentativas
+(429 DEMASIADAS_TENTATIVAS), `/me` sem sessao e com cookie invalido
+(401 NAO_AUTENTICADO), `/me` com sessao, logout (204 e cookie limpo), logout sem
+sessao (401), e o `exigirPapel` a deixar passar o coordenador e a dar
+403 SEM_PERMISSAO ao professor.
+
+### Capturas
+
+<!-- CAPTURA: passo-04-testes-auth.png | terminal com npm test a mostrar os 13 testes do ficheiro auth.test.ts a passar -->
+
+<!-- CAPTURA: passo-04-login-e-me.png | pedido real de login (POST /api/v1/auth/login) e, em seguida, GET /api/v1/auth/me com o cookie da sessao, num cliente HTTP -->
+
+### Problemas que apareceram
+
+- **O logout nao invalida o token no servidor.** Como a sessao e um JWT sem
+  estado, terminar a sessao limita-se a mandar o browser apagar o cookie. Se
+  alguem guardar o cookie antes de sair, ele continua valido ate expirar
+  (`SESSION_DURACAO_HORAS`). Assumimos isto por agora (e o comportamento normal
+  com JWT) e fica na lista de suposicoes; se a escola quiser revogacao imediata,
+  teriamos de guardar sessoes ativas no servidor.
+- **O contrato nao define o erro para email duplicado em `POST /professores`.** A
+  lista de 409 do contrato so tem `ALUNO_DUPLICADO` e `FALTA_DUPLICADA`, por isso
+  nao inventamos codigo novo: quando chegarmos a esse endpoint (Passo 07) vamos
+  responder 400 `VALIDACAO_INVALIDA` com `campos.email`, que sai dentro do
+  contrato. Fica registado aqui e na mensagem final para confirmarmos com o Jose.
+- **O `logout` ficou protegido.** O contrato nao marca `/auth/logout` como
+  publico (marca so o `/auth/login`), por isso decidimos exigir sessao. Se
+  preferirem um logout idempotente (204 mesmo sem sessao), muda-se numa linha.
+
+### Commit
+
+`32c23a8` - `feat(auth): login, logout e me com jwt no cookie e papeis`
