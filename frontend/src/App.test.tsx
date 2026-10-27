@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -36,7 +36,7 @@ describe("aplicacao", () => {
     await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
-    expect(await screen.findByRole("heading", { name: "Painel inicial" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Visão geral" })).toBeInTheDocument();
   });
 
   it("mostra o erro de credenciais inválidas", async () => {
@@ -54,5 +54,32 @@ describe("aplicacao", () => {
     await user.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/incorretos/i);
+  });
+
+  it("filtra a lista de alunos por classe", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.selectOptions(screen.getByLabelText("Classe"), "8");
+    await user.click(screen.getByRole("button", { name: "Pesquisar" }));
+
+    const alunoLink = await screen.findByRole("link", { name: "Bento Miguel" });
+    expect(alunoLink).toBeInTheDocument();
+    const cartao = alunoLink.closest("article");
+    expect(cartao).not.toBeNull();
+    expect(within(cartao as HTMLElement).getByRole("link", { name: "Encarregado" })).toHaveAttribute(
+      "href",
+      "tel:+244923100002",
+    );
   });
 });

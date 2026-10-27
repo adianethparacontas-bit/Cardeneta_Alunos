@@ -3,7 +3,9 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { DemoBanner } from "./components/DemoBanner";
 import { AppShell } from "./components/AppShell";
+import { AlunosPage } from "./pages/AlunosPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PainelPage } from "./pages/PainelPage";
 
 function UnauthorizedRedirect() {
   const navigate = useNavigate();
@@ -29,8 +31,8 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route index element={<Navigate to="/painel" replace />} />
-            <Route path="/painel" element={<Placeholder titulo="Painel inicial" />} />
-            <Route path="/alunos" element={<Placeholder titulo="Alunos" />} />
+            <Route path="/painel" element={<PainelPage />} />
+            <Route path="/alunos" element={<AlunosPage />} />
             <Route path="/alunos/:id" element={<Placeholder titulo="Página do aluno" />} />
             <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
             <Route path="/notas" element={<Placeholder titulo="Lançamento de notas" />} />
