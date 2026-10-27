@@ -106,3 +106,30 @@ ficheiros, 8 testes aprovados) e `npm --prefix frontend run build`.
 <!-- CAPTURA: passoF5-aluno-professor.png | ficha no separador Notas, professor autenticado sem separador Ocorrências (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `458e7f9` (`feat(frontend): pagina do aluno com separadores Dados, Ocorrencias, Notas e Faltas`).
+
+## F6 - Formulários
+
+Implementamos os formulários de criação/edição de aluno em
+`frontend/src/pages/AlunoFormularioPage.tsx`, de ocorrência em
+`frontend/src/pages/OcorrenciaFormularioPage.tsx` e de falta em
+`frontend/src/pages/FaltaFormularioPage.tsx`. A ficha permite mudar o estado
+do aluno. Os formulários apresentam `erro.campos` junto aos campos, ocultam
+gravidade para elogios, normalizam telefones no mock e respeitam as permissões
+de disciplina dos professores. Reforçamos no mock a validação de dados,
+duplicação de alunos/faltas e as regras de ocorrência e aluno ativo.
+
+Validamos criação de aluno e telefone normalizado, registo de elogio sem
+gravidade e registo de falta por professor na sua disciplina. Também
+verificamos respostas 401, 403, 409 e 422 e erros associados a campos. A
+primeira tentativa do teste de falta consultou o seletor antes do catálogo
+terminar de carregar; a seguinte identificou duas faltas válidas da mesma
+disciplina (a seed e a nova). Aguardamos o catálogo e confirmamos os dois
+registos. A validação final passou com `npm --prefix frontend run typecheck`,
+`npm --prefix frontend test` (2 ficheiros, 16 testes aprovados) e
+`npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF6-aluno-novo.png | formulário de criação de aluno preenchido com dados fictícios, coordenador (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF6-ocorrencia-elogio.png | formulário de ocorrência com tipo Elogio, gravidade ausente e campos fictícios, coordenador (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF6-falta-professor.png | formulário de falta com disciplina do professor selecionada, dados fictícios (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `ce8e739` (`feat(frontend): formularios de aluno, ocorrencia e falta`).
