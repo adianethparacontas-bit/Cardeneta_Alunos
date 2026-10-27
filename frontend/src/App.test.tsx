@@ -214,4 +214,29 @@ describe("aplicacao", () => {
     expect(await screen.findByText("Nota guardada.")).toBeInTheDocument();
     expect(screen.getByText("MT: 12")).toBeInTheDocument();
   });
+
+  it("combina filtros de tipo, gravidade e datas de ocorrências", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(screen.getByText("Filtros avançados"));
+    await user.selectOptions(screen.getByLabelText("Tipo de ocorrência"), "ELOGIO");
+    await user.selectOptions(screen.getByLabelText("Gravidade"), "LEVE");
+    await user.type(screen.getByLabelText("Ocorrências desde"), "2026-09-01");
+    await user.type(screen.getByLabelText("Ocorrências até"), "2026-09-30");
+    await user.click(screen.getByRole("button", { name: "Pesquisar" }));
+
+    expect(await screen.findByText("Não encontrámos alunos com estes filtros.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Bento Miguel" })).not.toBeInTheDocument();
+  });
 });

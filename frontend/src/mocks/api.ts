@@ -104,21 +104,29 @@ function tratarAlunos(params: URLSearchParams, method: string, body: Record<stri
     const pagina = Math.max(1, Number(params.get("pagina") ?? 1));
     const limite = Math.min(50, Math.max(1, Number(params.get("limite") ?? 10)));
     let result = alunos.filter((aluno) => {
-      const resumo = resumoAluno(aluno, user.papel);
+      const ocorrenciasAluno = ocorrenciasDoAluno(aluno.id);
+      const filtroOcorrenciaAtivo = Boolean(filtros.tipoOcorrencia || filtros.gravidade || filtros.de || filtros.ate);
+      const ocorrenciasCorrespondentes = ocorrenciasAluno.filter((item) =>
+        (!filtros.tipoOcorrencia || item.tipo === filtros.tipoOcorrencia) &&
+        (!filtros.gravidade || item.gravidade === filtros.gravidade) &&
+        compararData(item.dataOcorrencia, filtros.de, filtros.ate),
+      );
+      const notasFiltradas = notasAluno(aluno.id).filter(
+        (item) => !filtros.trimestre || item.trimestre === Number(filtros.trimestre),
+      );
       if (filtros.q && !`${aluno.nome} ${aluno.numeroProcesso}`.toLowerCase().includes(String(filtros.q).toLowerCase())) return false;
       if (filtros.classe && aluno.classe !== Number(filtros.classe)) return false;
       if (filtros.turma && aluno.turma !== filtros.turma) return false;
       if (filtros.turno && aluno.turno !== filtros.turno) return false;
       if (filtros.estado && aluno.estado !== filtros.estado) return false;
       if (filtros.anoLetivo && aluno.anoLetivo !== filtros.anoLetivo) return false;
-      if (filtros.tipoOcorrencia && !ocorrencias.some((item) => item.alunoId === aluno.id && item.tipo === filtros.tipoOcorrencia && compararData(item.dataOcorrencia, filtros.de, filtros.ate))) return false;
-      if (filtros.gravidade && !ocorrencias.some((item) => item.alunoId === aluno.id && item.gravidade === filtros.gravidade && compararData(item.dataOcorrencia, filtros.de, filtros.ate))) return false;
-      if (filtros.minOcorrencias && (resumo.totalOcorrencias ?? 0) < Number(filtros.minOcorrencias)) return false;
+      if (filtroOcorrenciaAtivo && ocorrenciasCorrespondentes.length === 0) return false;
+      const ocorrenciasContadas = filtroOcorrenciaAtivo ? ocorrenciasCorrespondentes.length : ocorrenciasAluno.length;
+      if (filtros.minOcorrencias && ocorrenciasContadas < Number(filtros.minOcorrencias)) return false;
       if (filtros.minFaltas && faltas.filter((item) => item.alunoId === aluno.id).length < Number(filtros.minFaltas)) return false;
       if (filtros.faltasJustificadas !== undefined && faltas.some((item) => item.alunoId === aluno.id && item.justificada === (String(filtros.faltasJustificadas) === "true")) === false) return false;
-      if (filtros.situacao && !notasAluno(aluno.id).some((item) => situacaoNota(item.mt) === filtros.situacao)) return false;
-      if (filtros.negativasMin && notasAluno(aluno.id).filter((item) => item.mt !== null && item.mt < 10).length < Number(filtros.negativasMin)) return false;
-      if (filtros.trimestre && !notasAluno(aluno.id).some((item) => item.trimestre === Number(filtros.trimestre))) return false;
+      if (filtros.situacao && !notasFiltradas.some((item) => situacaoNota(item.mt) === filtros.situacao)) return false;
+      if (filtros.negativasMin && notasFiltradas.filter((item) => item.mt !== null && item.mt < 10).length < Number(filtros.negativasMin)) return false;
       return true;
     }).map((aluno) => resumoAluno(aluno, user.papel));
     if (filtros.ordenar === "nome") result.sort((a, b) => a.nome.localeCompare(b.nome));
