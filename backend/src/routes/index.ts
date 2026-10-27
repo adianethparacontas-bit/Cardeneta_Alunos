@@ -1,6 +1,17 @@
 import { Router } from 'express';
+import { criarRotasAuth } from '../modules/auth/auth.routes.js';
 import { rotasSaude } from '../modules/saude/saude.routes.js';
 
-export const rotasApi = Router();
+/**
+ * Monta todas as rotas de /api/v1. E uma funcao (e nao um router global) para
+ * cada aplicacao ter os seus proprios limitadores, o que mantem os testes
+ * isolados entre si.
+ */
+export function criarRotasApi(): Router {
+  const rotas = Router();
 
-rotasApi.use('/saude', rotasSaude);
+  rotas.use('/saude', rotasSaude);
+  rotas.use('/auth', criarRotasAuth());
+
+  return rotas;
+}
