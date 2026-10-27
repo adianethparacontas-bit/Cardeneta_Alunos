@@ -10,7 +10,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Suposicoes a confirmar
 - Passo 00 - Preparacao
 - Passo 01 - Backend base
-- Passo 02 - CI *(a fazer)*
+- Passo 02 - CI
 - Passo 03 - Armazenamento JSON *(a fazer)*
 - Passo 04 - Autenticacao e papeis *(a fazer)*
 - Passo 05 - Alunos *(a fazer)*
@@ -290,3 +290,83 @@ continuam pendentes: a pasta `docs/capturas` ainda nao existe.)
 ### Commit
 
 `5976e9e` - `feat(backend): base do servidor, config e rota de saude`
+
+## Passo 02 - CI
+
+### Objetivo
+
+Ter o GitHub Actions a correr automaticamente o typecheck, os testes e o build do
+backend em cada push e em cada pull request, para nao integrarmos nada partido.
+
+### O que fizemos e porquê
+
+- **Um workflow so para o backend** (`.github/workflows/ci-backend.yml`), com um
+  job chamado "Typecheck, testes e build". O do frontend entra mais tarde (passo
+  do frontend, que e do Jose).
+- **Node 20 a partir do `.nvmrc`** (`node-version-file: backend/.nvmrc`), para o
+  CI usar exatamente a mesma versao que o projeto pede, sem a repetir no YAML.
+- **`npm ci` com cache** (`cache: npm` e `cache-dependency-path` para o
+  `package-lock.json` do backend), que e mais rapido e respeita o lockfile.
+- **`working-directory: backend`** no job inteiro, para nao andarmos a repetir
+  `cd backend` em cada passo.
+- **Filtro de `paths`** (`backend/**` e o proprio workflow): o CI do backend so
+  corre quando mexemos no backend. Assim uma alteracao so de documentacao nao
+  gasta minutos de CI.
+- Decidimos tambem correr o `build` no CI, e nao so o typecheck e os testes,
+  porque um erro de configuracao de build so aparece nessa fase.
+
+### Ficheiros criados
+
+- `.github/workflows/ci-backend.yml`
+
+### Como correr e testar
+
+Localmente, a partir de `backend`:
+
+```
+npm run typecheck
+npm test
+npm run build
+```
+
+No GitHub, o resultado aparece no separador **Actions** do repositorio, no
+workflow **CI backend**.
+
+### Resultado dos testes (local)
+
+```
+> cardeneta-aluno-backend@0.1.0 typecheck
+> tsc --noEmit
+
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/saude.test.ts (2 tests) 83ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:17:59
+   Duration  3.97s (transform 467ms, setup 0ms, collect 2.09s, tests 83ms, environment 1ms, prepare 877ms)
+
+> cardeneta-aluno-backend@0.1.0 build
+> tsc -p tsconfig.build.json
+```
+
+O workflow em si ainda **nao foi executado** quando escrevemos esta secao, porque
+so passa a existir a partir deste push. Nao inventamos um resultado verde: o que
+esta aqui e a saida local. Assim que o push for feito, o resultado real deve ser
+confirmado no separador Actions.
+
+### Capturas
+
+<!-- CAPTURA: passo-02-ci-verde.png | separador Actions do GitHub, workflow "CI backend" a verde, com os passos Typecheck, Testes e Build visiveis -->
+
+<!-- CAPTURA: passo-02-verificacoes-local.png | terminal local com npm run typecheck, npm test e npm run build a passar -->
+
+### Problemas que apareceram
+
+- **Nada a apontar neste passo.** O workflow foi escrito, mas a sua execucao real
+  so pode ser vista depois do push, no GitHub.
+
+### Commit
+
+`e5da659` - `ci: pipeline do backend com typecheck, testes e build`
