@@ -206,12 +206,16 @@ export function AlunoPage() {
             {utilizador?.papel === "COORDENADOR" && (
               <div className="flex flex-wrap gap-2">
                 <Link className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold text-slate-800" to={`/alunos/${id}/editar`}>Editar dados</Link>
+                <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/boletim/${id}`}>Ver boletim</Link>
                 <Link className="inline-flex min-h-11 items-center rounded-lg bg-teal-800 px-3 font-semibold text-white" to={`/alunos/${id}/ocorrencias/nova`}>Registar ocorrência</Link>
                 <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/alunos/${id}/faltas/nova`}>Registar falta</Link>
               </div>
             )}
             {utilizador?.papel === "PROFESSOR" && (
-              <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/alunos/${id}/faltas/nova`}>Registar falta</Link>
+              <div className="flex flex-wrap gap-2">
+                <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/boletim/${id}`}>Ver boletim</Link>
+                <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/alunos/${id}/faltas/nova`}>Registar falta</Link>
+              </div>
             )}
           </header>
           <div aria-label="Secções da ficha do aluno" className="-mx-4 overflow-x-auto px-4">

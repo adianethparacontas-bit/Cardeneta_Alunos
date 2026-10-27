@@ -24,7 +24,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="no-print border-b border-slate-200 bg-white">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4">
           <NavLink className="font-bold tracking-tight text-teal-900" to="/painel">Cardeneta</NavLink>
           <div className="flex items-center gap-3">
@@ -45,7 +45,7 @@ export function AppShell() {
       </main>
       <nav
         aria-label="Navegação principal"
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:static md:border-0"
+        className="no-print fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:static md:border-0"
       >
         <ul className="mx-auto flex min-h-16 max-w-3xl items-stretch justify-around md:hidden">
           {links.slice(0, 4).map(({ to, label, Icon }) => (

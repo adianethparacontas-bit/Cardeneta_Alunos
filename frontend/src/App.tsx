@@ -6,6 +6,7 @@ import { AppShell } from "./components/AppShell";
 import { AlunosPage } from "./pages/AlunosPage";
 import { AlunoPage } from "./pages/AlunoPage";
 import { AlunoFormularioPage } from "./pages/AlunoFormularioPage";
+import { BoletimPage } from "./pages/BoletimPage";
 import { FaltaFormularioPage } from "./pages/FaltaFormularioPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OcorrenciaFormularioPage } from "./pages/OcorrenciaFormularioPage";
@@ -42,7 +43,7 @@ export default function App() {
             <Route path="/alunos/:id" element={<AlunoPage />} />
             <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
             <Route path="/notas" element={<NotasPage />} />
-            <Route path="/boletim/:id" element={<Placeholder titulo="Boletim" />} />
+            <Route path="/boletim/:id" element={<BoletimPage />} />
           </Route>
         </Route>
         <Route element={<ProtectedRoute papeis={["COORDENADOR"]} />}>

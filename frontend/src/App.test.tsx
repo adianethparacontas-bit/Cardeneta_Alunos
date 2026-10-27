@@ -239,4 +239,49 @@ describe("aplicacao", () => {
     expect(await screen.findByText("Não encontrámos alunos com estes filtros.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Bento Miguel" })).not.toBeInTheDocument();
   });
+
+  it("mostra boletim imprimível ao coordenador com ocorrências recentes", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Ana Kiala" }));
+    await user.click(await screen.findByRole("link", { name: "Ver boletim" }));
+
+    expect(await screen.findByRole("heading", { name: "Boletim escolar" })).toBeInTheDocument();
+    expect(await screen.findByText("Ocorrências recentes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Imprimir boletim" })).toBeInTheDocument();
+    expect(screen.getByText("Língua Portuguesa")).toBeInTheDocument();
+  });
+
+  it("omite ocorrências do boletim visto pelo professor", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "prof1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Ana Kiala" }));
+    await user.click(await screen.findByRole("link", { name: "Ver boletim" }));
+
+    expect(await screen.findByRole("heading", { name: "Boletim escolar" })).toBeInTheDocument();
+    expect(screen.queryByText("Ocorrências recentes")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Imprimir boletim" })).toBeInTheDocument();
+  });
 });
