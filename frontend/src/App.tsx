@@ -1,6 +1,9 @@
 import { useEffect } from "react";
-import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { DemoBanner } from "./components/DemoBanner";
+import { AppShell } from "./components/AppShell";
+import { LoginPage } from "./pages/LoginPage";
 
 function UnauthorizedRedirect() {
   const navigate = useNavigate();
@@ -12,40 +15,8 @@ function UnauthorizedRedirect() {
   return null;
 }
 
-function Inicio() {
-  return (
-    <main className="mx-auto max-w-xl p-6">
-      <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-        Cardeneta do Aluno
-      </p>
-      <h1 className="mt-3 text-3xl font-bold text-slate-950">
-        Acompanhar cada percurso.
-      </h1>
-      <p className="mt-3 text-slate-600">
-        Acesso simples e seguro a alunos, notas, faltas e ocorrencias.
-      </p>
-      <Link
-        className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-teal-800 px-5 font-semibold text-white hover:bg-teal-900"
-        to="/login"
-      >
-        Entrar na plataforma
-      </Link>
-    </main>
-  );
-}
-
-function Login() {
-  return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-bold text-slate-950">Entrar</h1>
-      <p className="mt-3 text-slate-600">
-        A autenticacao sera ligada ao contrato da API.
-      </p>
-      <Link className="mt-6 inline-block min-h-12 text-teal-800 underline" to="/">
-        Voltar ao inicio
-      </Link>
-    </main>
-  );
+function Placeholder({ titulo }: { titulo: string }) {
+  return <h1 className="text-2xl font-bold">{titulo}</h1>;
 }
 
 export default function App() {
@@ -54,9 +25,27 @@ export default function App() {
       <DemoBanner />
       <UnauthorizedRedirect />
       <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Inicio />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppShell />}>
+            <Route index element={<Navigate to="/painel" replace />} />
+            <Route path="/painel" element={<Placeholder titulo="Painel inicial" />} />
+            <Route path="/alunos" element={<Placeholder titulo="Alunos" />} />
+            <Route path="/alunos/:id" element={<Placeholder titulo="Página do aluno" />} />
+            <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
+            <Route path="/notas" element={<Placeholder titulo="Lançamento de notas" />} />
+            <Route path="/boletim/:id" element={<Placeholder titulo="Boletim" />} />
+          </Route>
+        </Route>
+        <Route element={<ProtectedRoute papeis={["COORDENADOR"]} />}>
+          <Route element={<AppShell />}>
+            <Route path="/ocorrencias" element={<Placeholder titulo="Ocorrências" />} />
+            <Route path="/alunos/:id/editar" element={<Placeholder titulo="Editar aluno" />} />
+            <Route path="/alunos/novo" element={<Placeholder titulo="Novo aluno" />} />
+          </Route>
+        </Route>
+        <Route path="/" element={<Navigate to="/painel" replace />} />
+        <Route path="*" element={<Navigate to="/painel" replace />} />
       </Routes>
     </>
   );
