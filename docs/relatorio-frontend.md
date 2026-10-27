@@ -174,3 +174,26 @@ ficheiros, 18 testes aprovados) e `npm --prefix frontend run build`.
 <!-- CAPTURA: passoF8-pesquisa-avancada.png | lista sem resultados após filtros combinados de ocorrência tipo Elogio, gravidade Leve e datas, coordenador (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `116f5ca` (`feat(frontend): pesquisa avancada de alunos`).
+
+## F9 - Boletim imprimível e polimento
+
+Implementamos `frontend/src/pages/BoletimPage.tsx` com resultados por
+disciplina e trimestre, MFD, situação escolar, assiduidade e ocorrências
+recentes. O botão de impressão usa `window.print()` e as regras `@media print`
+removem navegação/faixa de demonstração e o estilo de ecrã. O professor pode
+abrir o boletim, mas as ocorrências são omitidas. Também adicionamos alvos
+maiores, tabelas roláveis em ecrãs estreitos e estrutura acessível para os
+dados tabulares.
+
+O primeiro typecheck apontou `replaceAll` incompatível com o target ES2020;
+substituímos por uma expressão regular compatível. Validamos o boletim de
+coordenador e professor, incluindo a ausência da secção de ocorrências no
+perfil de professor. Passaram `npm --prefix frontend run typecheck`,
+`npm --prefix frontend test` (2 ficheiros, 20 testes aprovados) e
+`npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF9-boletim-coordenador.png | boletim completo com notas, faltas e ocorrências recentes, coordenador autenticado (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF9-boletim-professor.png | boletim com notas e faltas, sem secção de ocorrências, professor autenticado (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF9-impressao.png | pré-visualização de impressão do boletim sem navegação e sem faixa de demonstração, coordenador (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `fd8111b` (`feat(frontend): boletim imprimivel, acessibilidade e polimento mobile`).
