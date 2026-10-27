@@ -63,3 +63,27 @@ ajustamos a asserção para localizar o texto visível, e os testes passaram.
 <!-- CAPTURA: passoF3-login.png | ecrã de login, estado vazio com faixa de demonstração e papel por autenticar (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `ab90d3e` (`feat(frontend): login e navegacao por papel`).
+
+## F4 - Painel e lista de alunos
+
+Criamos o painel inicial em `frontend/src/pages/PainelPage.tsx` e a lista em
+`frontend/src/pages/AlunosPage.tsx`, com pesquisa por nome/número de processo,
+filtros simples de classe, turma e estado, paginação, estados de carregamento,
+erro e vazio, e ligações `tel:` para os contactos fictícios. O painel de
+coordenador usa `GET /resumo`; para professor mostramos uma entrada adequada
+ao papel, sem chamar o endpoint reservado ao coordenador.
+
+Fechamos também o teste que tinha falhado antes de parar: verificamos o título
+do painel por `getByRole("heading")` e procuramos o contacto dentro do cartão
+do aluno filtrado, confirmando o `href` exato `tel:+244923100002`. A primeira
+tentativa após a correção revelou que a versão instalada das definições de
+Testing Library não aceita `exact` em `ByRoleOptions`; a seguinte mostrou que
+existiam vários elementos `article` na página. Em vez de enfraquecer as
+asserções, escopamos o contacto ao cartão de “Bento Miguel”. A validação final
+passou: `npm --prefix frontend run typecheck`, `npm --prefix frontend test`
+(2 ficheiros, 7 testes aprovados) e `npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF4-painel.png | painel carregado de coordenador, cartões de risco e turmas (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF4-alunos.png | lista carregada filtrada para 8.ª classe, cartões e contactos tel: de coordenador (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `761a0ea` (`feat(frontend): painel inicial e lista de alunos com pesquisa e paginacao`).
