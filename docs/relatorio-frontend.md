@@ -87,3 +87,22 @@ passou: `npm --prefix frontend run typecheck`, `npm --prefix frontend test`
 <!-- CAPTURA: passoF4-alunos.png | lista carregada filtrada para 8.ª classe, cartões e contactos tel: de coordenador (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `761a0ea` (`feat(frontend): painel inicial e lista de alunos com pesquisa e paginacao`).
+
+## F5 - Página do aluno
+
+Criamos `frontend/src/pages/AlunoPage.tsx` com separadores para dados,
+ocorrências, notas e faltas. A ficha apresenta os contactos como ligações
+telefónicas, os registos e notas existentes e estados vazios quando ainda não
+há informação. Para professores, o separador e o pedido de ocorrências não são
+renderizados; a página carrega os restantes dados através dos serviços por
+domínio.
+
+Validamos navegação do aluno e leitura de ocorrências, notas e faltas com
+`npm --prefix frontend run typecheck`, `npm --prefix frontend test` (2
+ficheiros, 8 testes aprovados) e `npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF5-aluno-dados.png | ficha do aluno no separador Dados, coordenador autenticado e contactos fictícios (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF5-aluno-ocorrencias.png | ficha no separador Ocorrências, ocorrência fictícia visível como coordenador (modo telemóvel 390x844) -->
+<!-- CAPTURA: passoF5-aluno-professor.png | ficha no separador Notas, professor autenticado sem separador Ocorrências (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `458e7f9` (`feat(frontend): pagina do aluno com separadores Dados, Ocorrencias, Notas e Faltas`).
