@@ -45,3 +45,21 @@ ao target TypeScript e tipos de query incompatíveis; corrigimos os três pontos
 e repetimos a validação com sucesso.
 
 Commit da funcionalidade: `ed813ff` (`feat(frontend): tipos, cliente e mocks`).
+
+## F3 - Login e navegação
+
+Implementamos o formulário de entrada em `frontend/src/pages/LoginPage.tsx`,
+com estado de submissão, mensagens gerais e erros de campo, e adicionamos o
+layout em `frontend/src/components/AppShell.tsx`. A navegação inferior mostra
+Ocorrências só para coordenadores; as rotas também verificam a sessão e o
+papel. O cliente redireciona sessões expiradas para o login.
+
+Validamos login de coordenador, credenciais inválidas e typecheck com
+`npm --prefix frontend run typecheck`, `npm --prefix frontend test` (2
+ficheiros, 6 testes aprovados) e `npm --prefix frontend run build`. A tentativa
+de procurar a faixa de demonstração como um elemento com nome acessível falhou;
+ajustamos a asserção para localizar o texto visível, e os testes passaram.
+
+<!-- CAPTURA: passoF3-login.png | ecrã de login, estado vazio com faixa de demonstração e papel por autenticar (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `ab90d3e` (`feat(frontend): login e navegacao por papel`).
