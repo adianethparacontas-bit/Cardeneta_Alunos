@@ -1,0 +1,11 @@
+export const CodigosErro = {
+  VALIDACAO_INVALIDA: 'VALIDACAO_INVALIDA',
+  NAO_AUTENTICADO: 'NAO_AUTENTICADO',
+  SEM_PERMISSAO: 'SEM_PERMISSAO',
+  NAO_ENCONTRADO: 'NAO_ENCONTRADO',
+  CONFLITO: 'CONFLITO',
+  DEMASIADOS_PEDIDOS: 'DEMASIADOS_PEDIDOS',
+  ERRO_INTERNO: 'ERRO_INTERNO',
+} as const;
+
+export type CodigoErro = (typeof CodigosErro)[keyof typeof CodigosErro];
