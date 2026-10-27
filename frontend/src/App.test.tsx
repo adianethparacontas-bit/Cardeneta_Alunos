@@ -187,4 +187,31 @@ describe("aplicacao", () => {
     await user.click(screen.getByRole("tab", { name: "Faltas" }));
     expect(await screen.findAllByText("Língua Portuguesa")).toHaveLength(2);
   });
+
+  it("pede motivo ao professor ao corrigir uma nota lançada", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "prof1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Notas" }))[0]!);
+    const mac = await screen.findByRole("spinbutton", { name: "MAC - Ana Kiala" });
+    await user.clear(mac);
+    await user.type(mac, "19");
+
+    const motivo = screen.getByLabelText("Motivo da correção — Ana Kiala");
+    expect(motivo).toBeRequired();
+    await user.type(motivo, "Correção após revisão da avaliação.");
+    await user.click(screen.getByRole("button", { name: "Guardar nota Ana Kiala" }));
+
+    expect(await screen.findByText("Nota guardada.")).toBeInTheDocument();
+    expect(screen.getByText("MT: 12")).toBeInTheDocument();
+  });
 });

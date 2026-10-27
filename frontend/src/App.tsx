@@ -9,6 +9,7 @@ import { AlunoFormularioPage } from "./pages/AlunoFormularioPage";
 import { FaltaFormularioPage } from "./pages/FaltaFormularioPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OcorrenciaFormularioPage } from "./pages/OcorrenciaFormularioPage";
+import { NotasPage } from "./pages/NotasPage";
 import { PainelPage } from "./pages/PainelPage";
 
 function UnauthorizedRedirect() {
@@ -40,7 +41,7 @@ export default function App() {
             <Route path="/alunos/:id/faltas/nova" element={<FaltaFormularioPage />} />
             <Route path="/alunos/:id" element={<AlunoPage />} />
             <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
-            <Route path="/notas" element={<Placeholder titulo="Lançamento de notas" />} />
+            <Route path="/notas" element={<NotasPage />} />
             <Route path="/boletim/:id" element={<Placeholder titulo="Boletim" />} />
           </Route>
         </Route>
