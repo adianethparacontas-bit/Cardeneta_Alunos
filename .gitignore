@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+
+# Ambiente (segredos nunca vao para o repositorio)
+.env
+.env.*
+!.env.example
+
+# Build e artefactos
+dist/
+build/
+
+# Testes
+coverage/
+
+# Dados: dados de menores, nada real no repositorio.
+# Só o .gitkeep fica versionado, os JSON sao ignorados.
+backend/data/*.json
+!backend/data/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
