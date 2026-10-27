@@ -108,4 +108,83 @@ describe("aplicacao", () => {
     await user.click(screen.getByRole("tab", { name: "Faltas" }));
     expect(await screen.findByText("Consulta médica")).toBeInTheDocument();
   });
+
+  it("cria um aluno com telefone normalizado", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Adicionar aluno" }));
+    await user.type(screen.getByLabelText("Nome completo"), "Yara Teste");
+    await user.selectOptions(screen.getByLabelText("Classe"), "7");
+    await user.type(screen.getByLabelText("Turma"), "Z");
+    await user.selectOptions(screen.getByLabelText("Turno"), "MANHA");
+    await user.type(screen.getByLabelText("Ano letivo"), "2026/2027");
+    await user.type(screen.getByLabelText("Telefone de emergência"), "923456780");
+    await user.type(screen.getByLabelText("Telefone do encarregado"), "+244923456781");
+    await user.click(screen.getByRole("button", { name: "Guardar aluno" }));
+
+    expect(await screen.findByRole("heading", { name: "Yara Teste" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "+244923456781" })).toHaveAttribute("href", "tel:+244923456781");
+  });
+
+  it("regista um elogio sem apresentar o campo gravidade", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Ana Kiala" }));
+    await user.click(await screen.findByRole("link", { name: "Registar ocorrência" }));
+    await user.selectOptions(screen.getByLabelText("Tipo de ocorrência"), "ELOGIO");
+    expect(screen.queryByLabelText("Gravidade")).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Descrição"), "Participou ativamente na aula.");
+    await user.click(screen.getByRole("button", { name: "Registar ocorrência" }));
+
+    expect(await screen.findByRole("heading", { name: "Ana Kiala" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Ocorrências" }));
+    expect(await screen.findByText("Participou ativamente na aula.")).toBeInTheDocument();
+  });
+
+  it("permite ao professor registar uma falta na sua disciplina", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "prof1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Ana Kiala" }));
+    expect(screen.queryByRole("tab", { name: "Ocorrências" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("link", { name: "Registar falta" }));
+    await user.selectOptions(await screen.findByLabelText(/Disciplina/), "d-port");
+    await user.click(screen.getByRole("button", { name: "Registar falta" }));
+
+    expect(await screen.findByRole("heading", { name: "Ana Kiala" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Faltas" }));
+    expect(await screen.findAllByText("Língua Portuguesa")).toHaveLength(2);
+  });
 });

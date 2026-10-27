@@ -137,7 +137,16 @@ function tratarAlunos(params: URLSearchParams, method: string, body: Record<stri
     for (const field of ["numeroEmergencia", "numeroEncarregado"]) {
       if (body[field] && !/^(?:\+244)?9\d{8}$/.test(String(body[field]).replace(/\s/g, ""))) erros[field] = "Introduza um número angolano válido.";
     }
+    if (!Number.isInteger(Number(body.classe)) || Number(body.classe) < 1 || Number(body.classe) > 13) erros.classe = "Selecione uma classe entre 1 e 13.";
+    if (!["MANHA", "TARDE", "NOITE"].includes(String(body.turno))) erros.turno = "Selecione um turno válido.";
     if (Object.keys(erros).length) falhar(400, "VALIDACAO_INVALIDA", "Verifique os campos indicados.", erros);
+    const duplicado = alunos.some((aluno) =>
+      aluno.nome.toLocaleLowerCase() === String(body.nome).trim().toLocaleLowerCase() &&
+      aluno.classe === Number(body.classe) &&
+      aluno.turma.toLocaleLowerCase() === String(body.turma).trim().toLocaleLowerCase() &&
+      aluno.anoLetivo === String(body.anoLetivo),
+    );
+    if (duplicado) falhar(409, "ALUNO_DUPLICADO", "Já existe um aluno com estes dados.", { nome: "Já existe um aluno com este nome nesta turma e ano letivo." });
     const id = `a-${String(proximoAluno++).padStart(3, "0")}`;
     const novo: Aluno = {
       id, numeroProcesso: `2026${String(proximoAluno).padStart(4, "0")}`,
@@ -362,6 +371,12 @@ export async function pedidoMock<T>(input: string, init: RequestInit = {}): Prom
         if (aluno.estado !== "ATIVO") falhar(422, "ALUNO_NAO_ATIVO", "Só pode registar ocorrências de alunos ativos.");
         if (request.tipo === "ELOGIO" && request.gravidade) falhar(422, "ELOGIO_SEM_GRAVIDADE", "Elogios não devem ter gravidade.");
         if (request.tipo !== "ELOGIO" && !request.gravidade) falhar(422, "GRAVIDADE_OBRIGATORIA", "Selecione a gravidade.", { gravidade: "Obrigatória para este tipo." });
+        const fields: Record<string, string> = {};
+        if (!request.tipo || !["ATRASO", "INDISCIPLINA", "COMPORTAMENTO_INAPROPRIADO", "AGRESSAO", "DANOS_MATERIAIS", "ELOGIO", "OUTRA"].includes(request.tipo)) fields.tipo = "Selecione um tipo válido.";
+        if (!String(request.descricao ?? "").trim()) fields.descricao = "A descrição é obrigatória.";
+        if (!request.dataOcorrencia) fields.dataOcorrencia = "A data é obrigatória.";
+        if (typeof request.encarregadoInformado !== "boolean") fields.encarregadoInformado = "Indique se o encarregado foi informado.";
+        if (Object.keys(fields).length) falhar(400, "VALIDACAO_INVALIDA", "Verifique os campos indicados.", fields);
         if (request.dataOcorrencia > new Date().toISOString().slice(0, 10)) falhar(422, "DATA_FUTURA", "A data não pode ser futura.", { dataOcorrencia: "Escolha uma data de hoje ou anterior." });
         const entry: Ocorrencia = {
           id: crypto.randomUUID(), alunoId: id!, alunoNome: aluno.nome, tipo: request.tipo,
@@ -385,7 +400,13 @@ export async function pedidoMock<T>(input: string, init: RequestInit = {}): Prom
       if (method === "POST") {
         const user = exigirPapel("COORDENADOR", "PROFESSOR");
         const request = body as unknown as NovaFalta;
+        if (aluno.estado !== "ATIVO") falhar(422, "ALUNO_NAO_ATIVO", "Só pode registar faltas de alunos ativos.");
         if (user.papel === "PROFESSOR" && (!request.disciplinaId || !user.disciplinaIds.includes(request.disciplinaId))) falhar(403, "SEM_PERMISSAO", "Só pode registar faltas nas suas disciplinas.");
+        const fields: Record<string, string> = {};
+        if (!request.data) fields.data = "A data é obrigatória.";
+        if (typeof request.justificada !== "boolean") fields.justificada = "Indique se a falta foi justificada.";
+        if (Object.keys(fields).length) falhar(400, "VALIDACAO_INVALIDA", "Verifique os campos indicados.", fields);
+        if (request.data > new Date().toISOString().slice(0, 10)) falhar(422, "DATA_FUTURA", "A data não pode ser futura.", { data: "Escolha uma data de hoje ou anterior." });
         if (faltas.some((item) => item.alunoId === id && item.data === request.data && item.disciplinaId === (request.disciplinaId ?? null))) falhar(409, "FALTA_DUPLICADA", "Já existe uma falta para este aluno nessa data.");
         const disciplina = disciplinas.find((item) => item.id === request.disciplinaId);
         const falta: Falta = {

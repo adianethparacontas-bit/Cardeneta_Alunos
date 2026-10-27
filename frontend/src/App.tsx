@@ -5,7 +5,10 @@ import { DemoBanner } from "./components/DemoBanner";
 import { AppShell } from "./components/AppShell";
 import { AlunosPage } from "./pages/AlunosPage";
 import { AlunoPage } from "./pages/AlunoPage";
+import { AlunoFormularioPage } from "./pages/AlunoFormularioPage";
+import { FaltaFormularioPage } from "./pages/FaltaFormularioPage";
 import { LoginPage } from "./pages/LoginPage";
+import { OcorrenciaFormularioPage } from "./pages/OcorrenciaFormularioPage";
 import { PainelPage } from "./pages/PainelPage";
 
 function UnauthorizedRedirect() {
@@ -34,6 +37,7 @@ export default function App() {
             <Route index element={<Navigate to="/painel" replace />} />
             <Route path="/painel" element={<PainelPage />} />
             <Route path="/alunos" element={<AlunosPage />} />
+            <Route path="/alunos/:id/faltas/nova" element={<FaltaFormularioPage />} />
             <Route path="/alunos/:id" element={<AlunoPage />} />
             <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
             <Route path="/notas" element={<Placeholder titulo="Lançamento de notas" />} />
@@ -43,8 +47,9 @@ export default function App() {
         <Route element={<ProtectedRoute papeis={["COORDENADOR"]} />}>
           <Route element={<AppShell />}>
             <Route path="/ocorrencias" element={<Placeholder titulo="Ocorrências" />} />
-            <Route path="/alunos/:id/editar" element={<Placeholder titulo="Editar aluno" />} />
-            <Route path="/alunos/novo" element={<Placeholder titulo="Novo aluno" />} />
+            <Route path="/alunos/:id/editar" element={<AlunoFormularioPage />} />
+            <Route path="/alunos/:id/ocorrencias/nova" element={<OcorrenciaFormularioPage />} />
+            <Route path="/alunos/novo" element={<AlunoFormularioPage />} />
           </Route>
         </Route>
         <Route path="/" element={<Navigate to="/painel" replace />} />

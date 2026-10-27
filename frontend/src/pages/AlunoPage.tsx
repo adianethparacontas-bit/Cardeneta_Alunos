@@ -1,12 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useAsyncData } from "../hooks/useAsyncData";
+import { ErroApiCliente } from "../services/api-client";
 import { listarFaltas } from "../services/faltas";
-import { obterAluno } from "../services/alunos";
+import { mudarEstadoAluno, obterAluno } from "../services/alunos";
 import { listarNotasAluno } from "../services/notas";
 import { listarOcorrenciasAluno } from "../services/ocorrencias";
-import type { Aluno, Falta, Nota, Ocorrencia } from "../types/api";
+import type { Aluno, EstadoAluno, Falta, Nota, Ocorrencia } from "../types/api";
 
 type Separador = "dados" | "ocorrencias" | "notas" | "faltas";
 
@@ -141,6 +142,9 @@ export function AlunoPage() {
   const { id = "" } = useParams();
   const { utilizador } = useAuth();
   const [separador, setSeparador] = useState<Separador>("dados");
+  const [estado, setEstado] = useState<EstadoAluno>("ATIVO");
+  const [erroEstado, setErroEstado] = useState("");
+  const [aGuardarEstado, setAGuardarEstado] = useState(false);
   const carregar = useCallback(async (): Promise<DadosAluno> => {
     const [aluno, notas, faltas, ocorrencias] = await Promise.all([
       obterAluno(id),
@@ -156,6 +160,23 @@ export function AlunoPage() {
     };
   }, [id, utilizador?.papel]);
   const { data, erro, carregando, recarregar } = useAsyncData(carregar);
+  useEffect(() => {
+    if (data) setEstado(data.aluno.estado);
+  }, [data]);
+
+  async function guardarEstado(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAGuardarEstado(true);
+    setErroEstado("");
+    try {
+      await mudarEstadoAluno(id, estado);
+      recarregar();
+    } catch (error) {
+      setErroEstado(error instanceof ErroApiCliente ? error.message : error instanceof Error ? error.message : "Não foi possível alterar o estado.");
+    } finally {
+      setAGuardarEstado(false);
+    }
+  }
   const separadores: { id: Separador; nome: string; coordenador?: boolean }[] = [
     { id: "dados", nome: "Dados" },
     { id: "ocorrencias", nome: "Ocorrências", coordenador: true },
@@ -183,7 +204,14 @@ export function AlunoPage() {
               <p className="mt-1 text-slate-600">Processo {data.aluno.numeroProcesso}</p>
             </div>
             {utilizador?.papel === "COORDENADOR" && (
-              <Link className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold text-slate-800" to={`/alunos/${id}/editar`}>Editar dados</Link>
+              <div className="flex flex-wrap gap-2">
+                <Link className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 font-semibold text-slate-800" to={`/alunos/${id}/editar`}>Editar dados</Link>
+                <Link className="inline-flex min-h-11 items-center rounded-lg bg-teal-800 px-3 font-semibold text-white" to={`/alunos/${id}/ocorrencias/nova`}>Registar ocorrência</Link>
+                <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/alunos/${id}/faltas/nova`}>Registar falta</Link>
+              </div>
+            )}
+            {utilizador?.papel === "PROFESSOR" && (
+              <Link className="inline-flex min-h-11 items-center rounded-lg border border-teal-800 px-3 font-semibold text-teal-900" to={`/alunos/${id}/faltas/nova`}>Registar falta</Link>
             )}
           </header>
           <div aria-label="Secções da ficha do aluno" className="-mx-4 overflow-x-auto px-4">
@@ -205,6 +233,18 @@ export function AlunoPage() {
           <div role="tabpanel">
             <PainelSeparador dados={data} separador={separador} />
           </div>
+          {utilizador?.papel === "COORDENADOR" && separador === "dados" && (
+            <form className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4" onSubmit={guardarEstado}>
+              <div className="min-w-48 flex-1">
+                <label className="block text-sm font-semibold" htmlFor="mudar-estado">Alterar estado</label>
+                <select className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3" id="mudar-estado" value={estado} onChange={(event) => setEstado(event.target.value as EstadoAluno)}>
+                  <option value="ATIVO">Ativo</option><option value="TRANSFERIDO">Transferido</option><option value="DESISTENTE">Desistente</option><option value="CONCLUIDO">Concluído</option>
+                </select>
+              </div>
+              <button className="min-h-11 rounded-lg bg-slate-800 px-4 font-semibold text-white disabled:opacity-60" disabled={aGuardarEstado || estado === data.aluno.estado} type="submit">{aGuardarEstado ? "A guardar…" : "Atualizar estado"}</button>
+              {erroEstado && <p className="w-full text-sm font-medium text-red-800" role="alert">{erroEstado}</p>}
+            </form>
+          )}
         </>
       )}
     </div>
