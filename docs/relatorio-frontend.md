@@ -222,3 +222,20 @@ Commits:
 
 - `7204bca` — `test(frontend): testes dos fluxos principais`
 - `d6cabf2` — `docs(frontend): readme do frontend`
+
+## Revisão final pré-PR
+
+Na revisão dos destinos do menu vimos que a rota de pesquisa e a listagem
+geral de ocorrências ainda eram placeholders. Ligamos `/pesquisa` aos filtros
+avançados e implementamos a lista paginada de ocorrências para coordenadores
+em `frontend/src/pages/OcorrenciasPage.tsx`. Também atualizamos o título e o
+idioma do documento em `frontend/index.html`.
+
+Validamos os destinos pelo menu em mais um teste de interface. No browser,
+usamos o viewport de 390 × 844: painel, alunos, ficha e boletim ficaram sem
+overflow horizontal. A emulação de impressão confirmou que a faixa e a
+navegação ficam ocultas e o boletim continua visível. Após os ajustes,
+passaram `npm --prefix frontend run typecheck`, `npm --prefix frontend test`
+(3 ficheiros, 24 testes aprovados) e `npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF10-ocorrencias-gerais.png | listagem geral filtrável de ocorrências fictícias, coordenador autenticado (modo telemóvel 390x844) -->
