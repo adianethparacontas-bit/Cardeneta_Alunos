@@ -197,3 +197,28 @@ perfil de professor. Passaram `npm --prefix frontend run typecheck`,
 <!-- CAPTURA: passoF9-impressao.png | pré-visualização de impressão do boletim sem navegação e sem faixa de demonstração, coordenador (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `fd8111b` (`feat(frontend): boletim imprimivel, acessibilidade e polimento mobile`).
+
+## F10a - Testes principais, README e auditoria
+
+Organizamos testes de contrato dos fluxos principais em
+`frontend/src/fluxos-principais.test.ts`: login, pesquisa paginada, validação e
+registo de ocorrência, e correção de nota com motivo. Os testes de interface em
+`frontend/src/App.test.tsx` também exercitam estes percursos completos.
+Documentamos instalação, execução com mocks e configuração para apontar ao
+backend em `frontend/README.md`.
+
+Passaram `npm --prefix frontend run typecheck`, `npm --prefix frontend test`
+(3 ficheiros, 23 testes aprovados) e `npm --prefix frontend run build`.
+Executamos `npm --prefix frontend audit --omit=dev`: **0 vulnerabilidades nas
+dependências de produção**. A saída da instalação com dependências de
+desenvolvimento incluídas reportou 3 vulnerabilidades (1 moderada e 2
+críticas); portanto, as críticas reportadas não atingem as dependências de
+produção. Não executamos `npm audit fix --force`.
+
+Seguimos apenas com mocks, conforme combinado. Não iniciamos nem testamos o
+backend e não fizemos a integração real F10b.
+
+Commits:
+
+- `7204bca` — `test(frontend): testes dos fluxos principais`
+- `d6cabf2` — `docs(frontend): readme do frontend`
