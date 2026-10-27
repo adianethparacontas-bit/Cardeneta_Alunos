@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { DemoBanner } from "./components/DemoBanner";
 import { AppShell } from "./components/AppShell";
 import { AlunosPage } from "./pages/AlunosPage";
+import { AlunoPage } from "./pages/AlunoPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PainelPage } from "./pages/PainelPage";
 
@@ -33,7 +34,7 @@ export default function App() {
             <Route index element={<Navigate to="/painel" replace />} />
             <Route path="/painel" element={<PainelPage />} />
             <Route path="/alunos" element={<AlunosPage />} />
-            <Route path="/alunos/:id" element={<Placeholder titulo="Página do aluno" />} />
+            <Route path="/alunos/:id" element={<AlunoPage />} />
             <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
             <Route path="/notas" element={<Placeholder titulo="Lançamento de notas" />} />
             <Route path="/boletim/:id" element={<Placeholder titulo="Boletim" />} />

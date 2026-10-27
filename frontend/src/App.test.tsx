@@ -82,4 +82,30 @@ describe("aplicacao", () => {
       "tel:+244923100002",
     );
   });
+
+  it("apresenta os separadores do aluno e detalhes das ocorrências", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Alunos" }))[0]!);
+    await user.click(await screen.findByRole("link", { name: "Ana Kiala" }));
+
+    expect(await screen.findByRole("heading", { name: "Dados do aluno" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Ocorrências" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Ocorrências" }));
+    expect(await screen.findByText(/chegada após o início da aula/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Notas" }));
+    expect(screen.getByText("Língua Portuguesa")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Faltas" }));
+    expect(await screen.findByText("Consulta médica")).toBeInTheDocument();
+  });
 });
