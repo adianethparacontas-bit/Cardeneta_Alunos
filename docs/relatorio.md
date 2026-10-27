@@ -11,7 +11,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Passo 00 - Preparacao
 - Passo 01 - Backend base
 - Passo 02 - CI
-- Passo 03 - Armazenamento JSON *(a fazer)*
+- Passo 03 - Armazenamento JSON
 - Passo 04 - Autenticacao e papeis *(a fazer)*
 - Passo 05 - Alunos *(a fazer)*
 - Passo 06 - Ocorrencias *(a fazer)*
@@ -370,3 +370,83 @@ confirmado no separador Actions.
 ### Commit
 
 `e5da659` - `ci: pipeline do backend com typecheck, testes e build`
+
+## Passo 03 - Armazenamento JSON
+
+### Objetivo
+
+Ter a camada de guardar/ler dados em ficheiros JSON, escondida atras de uma API
+simples, com escrita atomica e uma fila por ficheiro, para que dois pedidos
+simultaneos nao estraguem os dados. E o que nos permite trocar por uma base de
+dados mais tarde sem mexer no resto do codigo.
+
+### O que fizemos e porquê
+
+- **`src/storage/armazenamento-json.ts`** com tres operacoes:
+  `lerColecao(nome, padrao)`, `escreverColecao(nome, dados)` e
+  `comColecao(nome, padrao, operacao)`. A ultima faz ler-modificar-escrever
+  dentro da fila, que e o que usamos sempre que precisamos de alterar algo.
+- **Escrita atomica**: escrevemos para um ficheiro temporario (`*.tmp-pid-data-random`)
+  e so depois fazemos `rename`. Assim nunca existe um ficheiro a meio (o rename e
+  atomico no mesmo sistema de ficheiros).
+- **Fila por ficheiro**: mantemos um `Map` de promessas, uma por caminho. Cada
+  operacao encadeia na anterior, por isso dois pedidos simultaneos sobre a mesma
+  colecao sao serializados e nao se perdem atualizacoes.
+- **Ficheiro em falta vs corrompido**: se o ficheiro nao existir, devolvemos o
+  valor por defeito (colecao vazia). Se existir mas o JSON estiver estragado,
+  lancamos `ErroArmazenamento`, que o tratador central transforma em 500
+  `ERRO_INTERNO`. Preferimos falhar alto a servir dados a meio.
+- **Pasta de dados configuravel**: `src/storage/diretorio-dados.ts` guarda o
+  diretorio atual (por defeito vem do `DATA_DIR` do ambiente) e expoe
+  `obterDiretorioDados()` / `definirDiretorioDados()`. Os testes apontam isto
+  para uma pasta temporaria, para nunca tocar em `backend/data`.
+- **Criacao da pasta**: a pasta de dados e criada automaticamente na primeira
+  escrita (`mkdir` recursivo).
+
+### Ficheiros criados
+
+- `backend/src/storage/armazenamento-json.ts`
+- `backend/src/storage/diretorio-dados.ts`
+- `backend/src/storage/erro-armazenamento.ts`
+- `backend/tests/armazenamento.test.ts`
+- `backend/tests/ajuda/dados-temporarios.ts` (ajuda partilhada para os testes
+  usarem uma pasta temporaria)
+
+### Como correr e testar
+
+```
+npm test
+```
+
+### Resultado dos testes
+
+```
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/armazenamento.test.ts (6 tests) 2099ms
+   ✓ armazenamento json > nao perde atualizacoes quando chegam pedidos ao mesmo tempo 1978ms
+ ✓ tests/saude.test.ts (2 tests) 89ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Duration  4.58s
+```
+
+Os seis testes cobrem: gravar e ler, ficheiro em falta, ficheiro corrompido,
+criacao da pasta, ausencia de ficheiros temporarios no fim e perda zero de
+atualizacoes com 20 escritas concorrentes.
+
+### Capturas
+
+<!-- CAPTURA: passo-03-testes-armazenamento.png | terminal com npm test a mostrar os 6 testes do armazenamento a passar -->
+
+### Problemas que apareceram
+
+- **O teste de concorrencia era lento no Windows.** Com 50 escritas concorrentes
+  demorava quase 5 segundos (o sistema de ficheiros do Windows e lento a criar e
+  renomear ficheiros). Reduzimos para 20, que continua a provar o mesmo e corre
+  em cerca de 2 segundos.
+
+### Commit
+
+`b56b1ed` - `feat(armazenamento): camada json com escrita atomica e fila`
