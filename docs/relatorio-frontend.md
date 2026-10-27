@@ -156,3 +156,21 @@ correções. A validação completa passou: `npm --prefix frontend run typecheck
 <!-- CAPTURA: passoF7-lancamento-notas.png | lançamento de notas na 7.ª classe A, professora com Língua Portuguesa selecionada, motivo de correção visível (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `cdbb11b` (`feat(frontend): lancamento de notas em lote`).
+
+## F8 - Pesquisa avançada de alunos
+
+Expandimos `frontend/src/pages/AlunosPage.tsx` com filtros de ocorrências
+(tipo, gravidade, período e mínimo), situação escolar, trimestre, notas
+negativas, faltas justificadas e ordenação. Os filtros de ocorrências só são
+apresentados a coordenadores. Ajustamos o mock para combinar tipo, gravidade e
+datas na mesma ocorrência; assim não associamos, por engano, o elogio de um
+aluno a uma gravidade pertencente a outro registo.
+
+Validamos este caso combinado (elogio e gravidade leve em datas coincidentes,
+sem ocorrência que satisfaça ambos), além dos fluxos existentes. Passaram
+`npm --prefix frontend run typecheck`, `npm --prefix frontend test` (2
+ficheiros, 18 testes aprovados) e `npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF8-pesquisa-avancada.png | lista sem resultados após filtros combinados de ocorrência tipo Elogio, gravidade Leve e datas, coordenador (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `116f5ca` (`feat(frontend): pesquisa avancada de alunos`).
