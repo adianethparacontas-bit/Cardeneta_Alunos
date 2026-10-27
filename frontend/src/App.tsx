@@ -11,6 +11,7 @@ import { FaltaFormularioPage } from "./pages/FaltaFormularioPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OcorrenciaFormularioPage } from "./pages/OcorrenciaFormularioPage";
 import { NotasPage } from "./pages/NotasPage";
+import { OcorrenciasPage } from "./pages/OcorrenciasPage";
 import { PainelPage } from "./pages/PainelPage";
 
 function UnauthorizedRedirect() {
@@ -21,10 +22,6 @@ function UnauthorizedRedirect() {
     return () => window.removeEventListener("api:nao-autenticado", redirect);
   }, [navigate]);
   return null;
-}
-
-function Placeholder({ titulo }: { titulo: string }) {
-  return <h1 className="text-2xl font-bold">{titulo}</h1>;
 }
 
 export default function App() {
@@ -41,14 +38,14 @@ export default function App() {
             <Route path="/alunos" element={<AlunosPage />} />
             <Route path="/alunos/:id/faltas/nova" element={<FaltaFormularioPage />} />
             <Route path="/alunos/:id" element={<AlunoPage />} />
-            <Route path="/pesquisa" element={<Placeholder titulo="Pesquisa avançada" />} />
+            <Route path="/pesquisa" element={<AlunosPage avancada />} />
             <Route path="/notas" element={<NotasPage />} />
             <Route path="/boletim/:id" element={<BoletimPage />} />
           </Route>
         </Route>
         <Route element={<ProtectedRoute papeis={["COORDENADOR"]} />}>
           <Route element={<AppShell />}>
-            <Route path="/ocorrencias" element={<Placeholder titulo="Ocorrências" />} />
+            <Route path="/ocorrencias" element={<OcorrenciasPage />} />
             <Route path="/alunos/:id/editar" element={<AlunoFormularioPage />} />
             <Route path="/alunos/:id/ocorrencias/nova" element={<OcorrenciaFormularioPage />} />
             <Route path="/alunos/novo" element={<AlunoFormularioPage />} />

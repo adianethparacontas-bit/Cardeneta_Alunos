@@ -284,4 +284,25 @@ describe("aplicacao", () => {
     expect(screen.queryByText("Ocorrências recentes")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Imprimir boletim" })).toBeInTheDocument();
   });
+
+  it("abre pesquisa avançada e o registo geral de ocorrências pelo menu", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "coord1@cardeneta.test");
+    await user.type(screen.getByLabelText("Palavra-passe"), "demo123");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await user.click((await screen.findAllByRole("link", { name: "Pesquisa" }))[0]!);
+    expect(await screen.findByRole("heading", { name: "Pesquisa avançada de alunos" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Tipo de ocorrência")).toBeInTheDocument();
+    await user.click((await screen.findAllByRole("link", { name: "Ocorrências" }))[0]!);
+    expect(await screen.findByRole("heading", { name: "Ocorrências" })).toBeInTheDocument();
+    expect(await screen.findByText(/chegada após o início da aula/i)).toBeInTheDocument();
+  });
 });

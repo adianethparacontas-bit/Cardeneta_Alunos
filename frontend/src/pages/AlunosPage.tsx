@@ -49,7 +49,7 @@ function CartaoAluno({ aluno }: { aluno: AlunoResumo }) {
   );
 }
 
-export function AlunosPage() {
+export function AlunosPage({ avancada = false }: { avancada?: boolean }) {
   const { utilizador } = useAuth();
   const [pesquisa, setPesquisa] = useState("");
   const [classe, setClasse] = useState("");
@@ -107,7 +107,7 @@ export function AlunosPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-teal-800">Gestão escolar</p>
-          <h1 className="mt-1 text-2xl font-bold">Alunos</h1>
+          <h1 className="mt-1 text-2xl font-bold">{avancada ? "Pesquisa avançada de alunos" : "Alunos"}</h1>
         </div>
         {utilizador?.papel === "COORDENADOR" && <Link className="inline-flex min-h-12 items-center rounded-lg bg-teal-800 px-4 font-bold text-white" to="/alunos/novo">Adicionar aluno</Link>}
       </header>
@@ -143,7 +143,7 @@ export function AlunosPage() {
             </select>
           </div>
         </div>
-        <details className="rounded-lg border border-slate-200">
+        <details className="rounded-lg border border-slate-200" open={avancada}>
           <summary className="min-h-12 cursor-pointer px-3 py-3 font-semibold text-slate-800">Filtros avançados</summary>
           <div className="grid gap-3 border-t border-slate-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
             {utilizador?.papel === "COORDENADOR" && (
