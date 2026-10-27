@@ -13,7 +13,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Passo 02 - CI
 - Passo 03 - Armazenamento JSON
 - Passo 04 - Autenticacao e papeis
-- Passo 05 - Alunos *(a fazer)*
+- Passo 05 - Alunos
 - Passo 06 - Ocorrencias *(a fazer)*
 - Passo 07 - Disciplinas, professores e notas *(a fazer)*
 - Passo 08 - Faltas *(a fazer)*
@@ -77,6 +77,18 @@ Sobre a sessao, ficam tambem duas decisoes tecnicas a confirmar:
   endereco de rede (configuravel por ambiente).
 
 Os calculos nunca se guardam: calculam-se sempre ao ler.
+
+Sobre os alunos, ficam mais duas decisoes por confirmar:
+
+- **O que conta como aluno duplicado.** O contrato prevê o erro 409
+  `ALUNO_DUPLICADO` mas nao diz qual e a chave. Assumimos que um aluno e
+  duplicado quando ja existe outro com o **mesmo nome** (sem acentos nem
+  maiusculas), **na mesma turma do mesmo ano letivo**. Se a escola usar outro
+  criterio (por exemplo o numero de processo do encarregado), mudamos a regra
+  num unico sitio.
+- **O campo `turma` e texto.** O contrato escreve so `turma`, sem dizer se e
+  numero ou letra. Guardamos como texto (`"A"`, `"B"`, `"1"`) e aceitamos que
+  venha como texto ou numero, para nao criar atrito com o frontend.
 
 ## Passo 00 - Preparacao
 
@@ -582,3 +594,123 @@ sessao (401), e o `exigirPapel` a deixar passar o coordenador e a dar
 ### Commit
 
 `32c23a8` - `feat(auth): login, logout e me com jwt no cookie e papeis`
+
+## Passo 05 - Alunos
+
+### Objetivo
+
+Ter os alunos a serio no servidor: criar, consultar e editar alunos, com o
+numero de processo gerado pelo servidor (unico e imutavel), os telefones
+angolanos normalizados para `+244XXXXXXXXX`, o estado controlado e um 409 claro
+quando se tenta registar o mesmo aluno duas vezes. A vista do professor e mais
+pobre do que a do coordenador: o professor ve os alunos, mas nao os contadores
+de ocorrencias nem pode criar ou editar.
+
+### O que fizemos e porquê
+
+- **Numero de processo gerado no servidor.** O formato e `AAAA-0001`, em que o
+  ano vem do ano letivo (`"2026/2027"` -> `"2026"`) e o sequencial continua a
+  partir do maior que ja exista **para esse ano**. E calculado dentro da fila de
+  escrita, por isso dois pedidos ao mesmo tempo nunca dao o mesmo numero. Depois
+  de atribuido, nunca mais muda: as rotas de edicao nao lhe tocam.
+- **Telefones normalizados.** A funcao `normalizarTelefone` aceita `923456789`,
+  `+244923456789`, `244923456789`, `00244923456789` e variantes com espacos,
+  pontos, parenteses ou hifens, e guarda sempre `+244XXXXXXXXX`. Se o numero nao
+  tiver os 9 digitos nacionais, responde **400 VALIDACAO_INVALIDA** com o campo
+  certo (`numeroEmergencia` ou `numeroEncarregado`).
+- **Aluno novo entra sempre ATIVO.** Os outros estados
+  (TRANSFERIDO/DESISTENTE/CONCLUIDO) mudam-se pelo
+  `PATCH /alunos/:id/estado`.
+- **409 ALUNO_DUPLICADO.** Antes de gravar, verificamos se ja existe um aluno
+  com o mesmo nome (sem acentos nem maiusculas) na mesma turma e ano letivo. A
+  verificacao e feita dentro da fila de escrita, para nao haver corridas.
+- **AlunoResumo com contadores so para o coordenador.** A lista
+  `GET /alunos` devolve o aluno com `totalOcorrencias` e `ultimaOcorrenciaEm`.
+  Para um professor esses dois campos vem a `null` (o contrato exige). Como as
+  ocorrencias ainda nao existem (Passo 06), o coordenador ve `0` e `null`; a
+  contagem ja le a colecao `ocorrencias` em cru, por isso no passo seguinte
+  passa a mostrar os numeros reais sem mexer na API.
+- **Filtros base e paginacao.** A lista ja aceita `q` (procura por nome ou
+  numero de processo, ignorando acentos e maiusculas), `classe`, `turma`,
+  `turno`, `estado`, `anoLetivo`, `pagina` e `limite`, com o `meta`
+  (`pagina`, `limite`, `total`) do contrato. Os filtros avancados (ocorrencias,
+  situacao, negativas, faltas, ordenacao) ficam para o Passo 09, como combinado.
+- **Permissoes no servidor.** Ver e consultar e para os dois papeis; criar,
+  editar e mudar o estado e so para o coordenador (**403 SEM_PERMISSAO** a um
+  professor). Sem sessao, tudo responde **401 NAO_AUTENTICADO**.
+- **Validacao com os mesmos defensores.** Usamos o `validar(esquema, dados)` do
+  Passo 04, por isso todos os erros de corpo/query saem como **400
+  VALIDACAO_INVALIDA** com `campos`. A classe esta limitada a 1 a 13 e o ano
+  letivo ao formato `AAAA/AAAA`.
+
+### Ficheiros criados ou alterados
+
+- `backend/src/modules/alunos/tipos.ts`, `telefones.ts`, `numero-processo.ts`,
+  `alunos.esquemas.ts`, `alunos.repositorio.ts`, `alunos.controller.ts`,
+  `alunos.routes.ts`
+- `backend/src/utils/datas.ts`, `backend/src/utils/texto.ts`,
+  `backend/src/utils/paginacao.ts`
+- `backend/src/validacao/enumeracao.ts`
+- `backend/src/routes/index.ts` (monta `/alunos`)
+- `backend/tests/alunos.test.ts`
+
+### Como correr e testar
+
+```
+npm run typecheck
+npm test
+npm run build
+```
+
+### Resultado dos testes
+
+```
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/armazenamento.test.ts (6 tests)
+ ✓ tests/saude.test.ts (2 tests)
+ ✓ tests/auth.test.ts (13 tests)
+ ✓ tests/alunos.test.ts (19 tests)
+
+ Test Files  4 passed (4)
+      Tests  40 passed (40)
+```
+
+Os dezanove testes de alunos cobrem: criacao com numero de processo gerado,
+estado ATIVO e telefones normalizados; sequencia do numero por ano letivo (o
+segundo aluno passa a `2026-0002`); duplicado (409 ALUNO_DUPLICADO); telefone
+invalido (400 com o campo); corpo invalido (400 com os campos em falta); 403 a
+um professor e 401 sem sessao; lista paginada com `meta`; filtros por classe,
+turma, turno e estado; procura por nome ignorando acentos e maiusculas;
+contadores de ocorrencias visiveis ao coordenador e a `null` para o professor;
+obter um aluno (200) e 404 quando nao existe; editar sem mexer no numero de
+processo; e mudar o estado (com 400 num estado invalido).
+
+### Capturas
+
+<!-- CAPTURA: passo-05-testes-alunos.png | terminal com npm test a mostrar os 19 testes do ficheiro alunos.test.ts a passar -->
+
+<!-- CAPTURA: passo-05-criar-aluno.png | pedido real POST /api/v1/alunos (coordenador autenticado) com a resposta 201 a mostrar o numeroProcesso gerado e os telefones normalizados -->
+
+<!-- CAPTURA: passo-05-lista-alunos.png | pedido real GET /api/v1/alunos com filtros e paginacao, a mostrar o meta e os contadores de ocorrencias -->
+
+### Problemas que apareceram
+
+- **O contrato nao diz qual e a chave de duplicado do aluno.** Decidimos nome
+  normalizado + ano letivo + classe + turma e deixamos isto na lista de
+  suposicoes, para confirmarmos com a escola.
+- **O tipo de `turma` nao esta fixado.** O contrato escreve so `turma`. Optamos
+  por guardar texto e aceitar numero ou texto na entrada, para nao bloquear o
+  frontend do Jose seja qual for a escolha.
+- **Tipos do Express 5 para `req.params.id`.** O TypeScript do Express 5 tipa
+  `req.params.id` como `string | string[] | undefined`, o que obrigava a tratar
+  o caso. Resolvemos com um pequeno ajudante `idDoPedido(req)` que devolve texto
+  vazio quando falta, caindo no 404 normal.
+- **Dois `Edit` em paralelo no mesmo ficheiro.** Ao corrigir o controlador
+  lancei duas edicoes ao mesmo tempo sobre o mesmo ficheiro e uma delas perdeu-se
+  (escrita em corrida). Aprendemos a editar um ficheiro de cada vez.
+
+### Commit
+
+`5c3dfcb` - `feat(alunos): crud de alunos com numero de processo, telefones normalizados e filtros base`
+
