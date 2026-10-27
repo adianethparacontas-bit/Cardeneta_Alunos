@@ -14,7 +14,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Passo 03 - Armazenamento JSON
 - Passo 04 - Autenticacao e papeis
 - Passo 05 - Alunos
-- Passo 06 - Ocorrencias *(a fazer)*
+- Passo 06 - Ocorrencias
 - Passo 07 - Disciplinas, professores e notas *(a fazer)*
 - Passo 08 - Faltas *(a fazer)*
 - Passo 09 - Pesquisa e filtros avancados *(a fazer)*
@@ -713,4 +713,113 @@ processo; e mudar o estado (com 400 num estado invalido).
 ### Commit
 
 `5c3dfcb` - `feat(alunos): crud de alunos com numero de processo, telefones normalizados e filtros base`
+
+## Passo 06 - Ocorrencias
+
+### Objetivo
+
+Registar o que se passa com os alunos: atrasos, indisciplina, agressoes, danos,
+elogios e restantes tipos do contrato. Cada ocorrencia guarda o tipo, a
+gravidade (quando aplicavel), a descricao, a data, o local, a acao tomada e se o
+encarregado foi informado, alem de quem a registou. As ocorrencias sao so do
+coordenador: um professor nem as ve nem as registra.
+
+### O que fizemos e porquê
+
+- **As tres regras de negocio do contrato.** Um elogio **nao pode** ter gravidade
+  (**422 ELOGIO_SEM_GRAVIDADE**); qualquer outro tipo **tem** de ter gravidade
+  (**422 GRAVIDADE_OBRIGATORIA**); e a data da ocorrencia nao pode ser no futuro
+  (**422 DATA_FUTURA**). Estas regras vivem no controlador, porque dependem do
+  codigo de erro especifico do contrato (nao sao meras validacoes de formato).
+- **Nao se registam ocorrencias de alunos inativos.** Antes de gravar,
+  confirmamos que o aluno existe (senao **404 NAO_ENCONTRADO**) e que esta
+  ATIVO; se estiver TRANSFERIDO/DESISTENTE/CONCLUIDO, responde **422
+  ALUNO_NAO_ATIVO**.
+- **Quem registou fica gravado.** A ocorrencia guarda `registadaPor = { id, nome
+  }` a partir do utilizador autenticado, e tambem o `alunoNome` (copiado na
+  altura), para a listagem nao precisar de ir buscar o aluno a cada leitura.
+- **Listagem por aluno e listagem geral.** `GET /alunos/:id/ocorrencias` devolve
+  a lista simples do aluno (mais recentes primeiro) e `GET /ocorrencias` devolve
+  a lista paginada com `meta`, com filtros por `alunoId`, `tipo`, `gravidade`,
+  `de`, `ate` e `coordenadorId` (quem registou).
+- **As rotas do aluno vivem no router dos alunos.** O caminho
+  `/alunos/:id/ocorrencias` esta montado no `alunos.routes.ts`, porque o `:id` e
+  o do aluno; o `/ocorrencias` tem o seu proprio router. Ambos exigem
+  coordenador.
+- **Contadores ja reais na lista de alunos.** A funcao
+  `contarOcorrenciasPorAluno` (do Passo 05) lia a colecao `ocorrencias` em cru;
+  agora passa a mostrar numeros a serio, sem mexer na API.
+- **Pequenas limpezas.** Passamos a ter um `esquemaDataIso` partilhado (em
+  `validacao/esquemas-comuns.ts`) e um ajudante `parametroDoCaminho`, para nao
+  repetir a validacao da data nem a leitura do `:id`.
+
+### Ficheiros criados ou alterados
+
+- `backend/src/modules/ocorrencias/tipos.ts`, `ocorrencias.esquemas.ts`,
+  `ocorrencias.repositorio.ts`, `ocorrencias.controller.ts`,
+  `ocorrencias.routes.ts`
+- `backend/src/validacao/esquemas-comuns.ts`, `backend/src/utils/pedido.ts`
+- `backend/src/modules/alunos/alunos.routes.ts` (rotas de ocorrencias),
+  `alunos.esquemas.ts` e `alunos.controller.ts` (usam os ajudantes partilhados)
+- `backend/src/routes/index.ts` (monta `/ocorrencias`)
+- `backend/tests/ocorrencias.test.ts`
+
+### Como correr e testar
+
+```
+npm run typecheck
+npm test
+npm run build
+```
+
+### Resultado dos testes
+
+```
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/auth.test.ts (13 tests)
+ ✓ tests/armazenamento.test.ts (6 tests)
+ ✓ tests/saude.test.ts (2 tests)
+ ✓ tests/ocorrencias.test.ts (15 tests)
+ ✓ tests/alunos.test.ts (19 tests)
+
+ Test Files  5 passed (5)
+      Tests  55 passed (55)
+```
+
+Os quinze testes de ocorrencias cobrem: registo com quem a registou e o nome do
+aluno; gravidade obrigatoria; elogio com gravidade recusado; elogio sem
+gravidade aceite; data no futuro recusada; aluno nao ativo recusado; aluno
+inexistente (404); corpo invalido (400 com `campos`); 403 a professor e 401 sem
+sessao; lista por aluno (mais recentes primeiro); lista geral com paginacao e
+`meta`; filtros por aluno, tipo, gravidade e intervalo de datas; e 403 a
+professor na lista geral.
+
+### Capturas
+
+<!-- CAPTURA: passo-06-testes-ocorrencias.png | terminal com npm test a mostrar os 15 testes do ficheiro ocorrencias.test.ts a passar -->
+
+<!-- CAPTURA: passo-06-criar-ocorrencia.png | pedido real POST /api/v1/alunos/:id/ocorrencias com a resposta 201 e, em seguida, um pedido com gravidade em falta a mostrar 422 GRAVIDADE_OBRIGATORIA -->
+
+<!-- CAPTURA: passo-06-lista-ocorrencias.png | pedido real GET /api/v1/ocorrencias com filtros (tipo e intervalo de datas) a mostrar o meta e as ocorrencias -->
+
+### Problemas que apareceram
+
+- **Ordem das regras de negocio.** Quando uma ocorrencia falha varias regras ao
+  mesmo tempo (por exemplo, sem gravidade e com data futura), o contrato nao diz
+  qual o erro a devolver. Escolhemos a ordem em que aparecem no contrato: aluno
+  nao ativo, depois gravidade obrigatoria, depois elogio sem gravidade, depois
+  data futura.
+- **`ultimaOcorrenciaEm` no resumo do aluno.** Como o Passo 05, usamos a
+  `dataOcorrencia` (a data em que a ocorrencia aconteceu) e nao o `criadoEm` (a
+  data em que foi registada), que nos pareceu mais util. Se preferirem o
+  registo, muda-se num sitio.
+- **`GET /alunos/:id/ocorrencias` sem paginacao.** O contrato so pede `meta` na
+  lista geral; a lista por aluno sai como `{ data: [...] }`, ordenada da mais
+  recente para a mais antiga.
+
+### Commit
+
+`a14f6c6` - `feat(ocorrencias): registo e listagem de ocorrencias com regras de gravidade, elogio e data`
+
 
