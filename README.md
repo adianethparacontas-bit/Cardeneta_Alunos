@@ -12,10 +12,11 @@ pequeno, estavel e bem feito.
 
 ## Estado
 
-Em construcao. Passo atual: **00 - Preparacao**.
+Em construcao. Passo atual: **01 - Backend base**.
 
-O backend ainda nao tem codigo de aplicacao. Esta preparado o esqueleto do
-repositorio (`.gitignore`, `.editorconfig`, `.nvmrc`, README e relatorio).
+O backend ja tem o esqueleto: servidor Express com config validada (Zod), erros
+centrais no formato `{ erro: { codigo, mensagem, campos? } }` e o endpoint
+`GET /api/v1/saude`. O frontend ainda nao existe.
 
 ## Estrutura
 

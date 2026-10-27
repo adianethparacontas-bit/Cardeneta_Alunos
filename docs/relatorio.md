@@ -9,7 +9,7 @@ e vamos construindo isto passo a passo para praticar o fluxo completo do GitHub
 - Introducao
 - Suposicoes a confirmar
 - Passo 00 - Preparacao
-- Passo 01 - Backend base *(a fazer)*
+- Passo 01 - Backend base
 - Passo 02 - CI *(a fazer)*
 - Passo 03 - Armazenamento JSON *(a fazer)*
 - Passo 04 - Autenticacao e papeis *(a fazer)*
@@ -154,3 +154,139 @@ Nao aplicavel: este passo nao tem interface.
 
 `d5046bb` - `chore: preparacao inicial do projeto`
 `docs: relatorio do passo 00` (commit seguinte, neste mesmo PR)
+
+## Passo 01 - Backend base
+
+### Objetivo
+
+Levantar o esqueleto do backend: projetos e scripts (Node 20 + TypeScript com
+ESM), configuracao validada com Zod, erros centrais no formato da API,
+`GET /api/v1/saude` e o primeiro teste com Supertest.
+
+### O que fizemos e porquê
+
+- **Estrutura por modulos.** Criamos `src/modules/saude` com `routes` e
+  `controller`, e um `src/routes/index.ts` que agrega tudo sob `/api/v1`. Assim
+  ja fica o molde para os modulos seguintes (alunos, ocorrencias, etc.).
+- **ESM com NodeNext.** O backend e ESM (`"type": "module"`) com
+  `module`/`moduleResolution` em `NodeNext`. Isto obriga a usar a extensao `.js`
+  nos imports relativos (mesmo apontando para ficheiros `.ts`), que e o correto
+  para o Node conseguir correr o build. Foi a decisao mais "chata" mas a mais
+  correta.
+- **Config com Zod (`src/config/env.ts`).** Lemos `NODE_ENV`, `PORT` e `DATA_DIR`
+  do ambiente, com valores por defeito, e falhamos logo no arranque se algo
+  estiver invalido. Deixamos de fora, de proposito, o segredo de sessao: so entra
+  no Passo 04, quando houver autenticacao.
+- **Erros centrais.** Criamos `AppError` (com `status`, `codigo`, `mensagem` e
+  `campos` opcionais), um conjunto de codigos em `src/errors/codigos.ts`, um
+  `tratadorDeErros` que responde sempre no formato
+  `{ erro: { codigo, mensagem, campos? } }` e um `tratadorDeRotaDesconhecida`
+  para 404. Os codigos de 401/403/409/429 ja ficam definidos para os passos
+  seguintes.
+- **`createApp()` separado do `server.ts`.** `src/app.ts` devolve a app Express
+  (sem `listen`), o que permite testar com Supertest sem abrir portas.
+  `src/server.ts` e so o arranque.
+- **Middlewares base.** `express.json()`, `cookie-parser` e `cors` (com
+  `credentials`). O `express-rate-limit` fica montado apenas quando
+  `NODE_ENV=production`, para nao interferir com os testes nem com o
+  desenvolvimento; o limite apertado do login entra no Passo 04.
+- **Dois tsconfig.** `tsconfig.json` serve o editor e o `typecheck` (inclui
+  `src`, `tests` e `vitest.config.ts`, com `noEmit`); `tsconfig.build.json`
+  compila so o `src` para `dist`. Assim os testes sao verificados por tipos mas
+  nao vao parar ao build.
+- **Resposta do `/saude`.** Devolvemos `{ data: { status: "ok" } }` para ja
+  seguirmos o formato `{ data, meta }` que vamos usar nas listagens.
+
+### Ficheiros criados
+
+- `backend/.env.example`
+- `backend/package.json`, `backend/package-lock.json`
+- `backend/tsconfig.json`, `backend/tsconfig.build.json`
+- `backend/vitest.config.ts`
+- `backend/src/app.ts`, `backend/src/server.ts`
+- `backend/src/config/env.ts`
+- `backend/src/errors/codigos.ts`, `app-error.ts`, `error-handler.ts`,
+  `not-found-handler.ts`
+- `backend/src/routes/index.ts`
+- `backend/src/modules/saude/saude.routes.ts`,
+  `backend/src/modules/saude/saude.controller.ts`
+- `backend/tests/saude.test.ts`
+
+### Como correr e testar
+
+A partir da pasta `backend`:
+
+```
+npm install
+npm run typecheck
+npm test
+npm run build
+npm run dev        # arranca em http://localhost:3000/api/v1
+```
+
+Nao precisamos de `.env` neste passo: `PORT`, `NODE_ENV` e `DATA_DIR` tem valores
+por defeito. O `.env` so passa a ser preciso no Passo 04.
+
+### Resultado dos testes
+
+`npm run typecheck` (sem erros, por isso sem saida):
+
+```
+> cardeneta-aluno-backend@0.1.0 typecheck
+> tsc --noEmit
+```
+
+`npm test`:
+
+```
+ RUN  v2.1.9 C:/Users/DELL/Cardeneta_Aluno/backend
+
+ ✓ tests/saude.test.ts (2 tests) 71ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:07:48
+   Duration  3.52s (transform 339ms, setup 0ms, collect 1.77s, tests 71ms, environment 0ms, prepare 783ms)
+```
+
+`npm run build`: correu sem erros e gerou `dist/` com `app.js`, `server.js`,
+`config/`, `errors/`, `modules/` e `routes/`.
+
+Tambem arrancamos o build (`node dist/server.js`) e fizemos pedidos reais:
+
+```
+GET /api/v1/saude  -> HTTP 200
+{"data":{"status":"ok"}}
+
+GET /api/v1/nao-existe  -> HTTP 404
+{"erro":{"codigo":"NAO_ENCONTRADO","mensagem":"Rota nao encontrada: GET /api/v1/nao-existe"}}
+```
+
+### Capturas
+
+Nao aplicavel: este passo nao tem interface. (As capturas do Passo 00
+continuam pendentes: a pasta `docs/capturas` ainda nao existe.)
+
+### Problemas que apareceram
+
+- **`docs/capturas` nao existe.** Os ficheiros
+  `passo-00-pr-aberto.png`, `passo-00-aprovacao.png` e `passo-00-merged.png`
+  nao estavam no repositorio, por isso nao fizemos o commit
+  `docs: capturas do passo 00`. Fica pendente ate os PNG existirem. Nao
+  referenciamos capturas que nao existem.
+- **`.nvmrc` apareceu vazio no working tree.** Ao sincronizar, o `.nvmrc` estava
+  reduzido a uma linha vazia (perdeu o `20`), o que impedia o `git checkout main`.
+  Repusemos o conteudo (`20`).
+- **Aviso do `npm audit` (7 vulnerabilidades).** Aparecem `@vitest/mocker`,
+  `esbuild`, `tinypool` e `zod`. As tres primeiras sao dependencias de
+  desenvolvimento (correm so nos testes, nao vao para producao) e a correcao
+  exige saltos de versao maiores (`vitest@5`). A do `zod` e sobre validacao de
+  colecoes muito grandes. Decidimos **nao** forcar `npm audit fix --force` neste
+  passo, para nao misturar atualizacoes de major com o esqueleto base, e fica
+  proposta uma atualizacao de dependencias como passo proprio.
+- **Avisos LF/CRLF do git.** Sao normais no Windows (o git normaliza no commit).
+  Nao alteramos nada.
+
+### Commit
+
+`5976e9e` - `feat(backend): base do servidor, config e rota de saude`
