@@ -128,11 +128,23 @@ para correr. A verificacao foi estrutural.
 
 ### Resultado
 
-`git status` apos a criacao dos ficheiros:
+`git status --short` depois de preparar os ficheiros para o commit:
 
 ```
-(Saida a confirmar no commit abaixo.)
+A  .editorconfig
+A  .gitignore
+A  .nvmrc
+A  README.md
+A  backend/data/.gitkeep
+A  docs/relatorio.md
 ```
+
+O git avisou que os ficheiros com fim de linha LF serao convertidos para CRLF no
+checkout (comportamento normal do git no Windows). O `.editorconfig` continua a
+pedir LF no conteudo; nao alteramos nada por causa disto.
+
+Nota: a pasta `frontend/` esta vazia e por isso nao aparece no `git` (o git nao
+versiona pastas vazias). Sera criada a serio no Passo 12 (frontend base).
 
 ### Capturas
 
@@ -140,4 +152,5 @@ Nao aplicavel: este passo nao tem interface.
 
 ### Commit
 
-`(hash a confirmar)`
+`d5046bb` - `chore: preparacao inicial do projeto`
+`docs: relatorio do passo 00` (commit seguinte, neste mesmo PR)
