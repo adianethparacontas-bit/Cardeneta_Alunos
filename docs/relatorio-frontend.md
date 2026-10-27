@@ -133,3 +133,26 @@ registos. A validação final passou com `npm --prefix frontend run typecheck`,
 <!-- CAPTURA: passoF6-falta-professor.png | formulário de falta com disciplina do professor selecionada, dados fictícios (modo telemóvel 390x844) -->
 
 Commit da funcionalidade: `ce8e739` (`feat(frontend): formularios de aluno, ocorrencia e falta`).
+
+## F7 - Lançamento de notas em lote
+
+Implementamos `frontend/src/pages/NotasPage.tsx` para escolher classe, turma,
+disciplina e trimestre e lançar MAC, NPP e NPT por aluno. A lista de
+disciplinas do professor é limitada às suas atribuições; calculamos MT no
+cliente apenas quando as três componentes existem. Ao corrigir uma componente
+já lançada, mostramos o campo obrigatório para o motivo. Após guardar,
+atualizamos localmente a referência da nota para manter correta a distinção
+entre primeiro lançamento e correção subsequente.
+
+Validamos a correção de MAC por professor, o motivo obrigatório e a MT
+resultante. A primeira execução do teste selecionou uma navegação duplicada;
+depois ajustamos para usar o link visível. Em seguida, a mensagem de sucesso
+não era encontrada quando a lista recarregava. Passamos a aplicar localmente a
+resposta `{ data: Nota }`, preservando a confirmação e a base para próximas
+correções. A validação completa passou: `npm --prefix frontend run typecheck`,
+`npm --prefix frontend test` (2 ficheiros, 17 testes aprovados) e
+`npm --prefix frontend run build`.
+
+<!-- CAPTURA: passoF7-lancamento-notas.png | lançamento de notas na 7.ª classe A, professora com Língua Portuguesa selecionada, motivo de correção visível (modo telemóvel 390x844) -->
+
+Commit da funcionalidade: `cdbb11b` (`feat(frontend): lancamento de notas em lote`).
